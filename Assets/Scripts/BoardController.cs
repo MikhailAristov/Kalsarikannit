@@ -23,8 +23,8 @@ public class BoardController : MonoBehaviour {
 	private void placeTiles(int DiameterCount) {
 		Debug.Assert(DiameterCount % 2 == 1);
 		// Place the first row
-		int halfRadiusCount = DiameterCount / 2; // intentional cast to int, rounding down
-		for(int x = -halfRadiusCount; x <= halfRadiusCount; x++) {
+		int halfDiameterCount = DiameterCount / 2; // intentional cast to int, rounding down
+		for(int x = -halfDiameterCount; x <= halfDiameterCount; x++) {
 			// Calculate how many tiles in current column
 			int yCount = DiameterCount - Mathf.Abs(x);
 			float vertOffset = -0.5f * TileController.VERTICAL_SPACING * (yCount - 1);
@@ -35,7 +35,7 @@ public class BoardController : MonoBehaviour {
 				newTile.transform.localPosition =
 					new Vector2(TileController.HORIZONTAL_SPACING * x, vertOffset + TileController.VERTICAL_SPACING * y);
 				// Manipulate names
-				if(x == 0 && y == halfRadiusCount) {
+				if(x == 0 && y == halfDiameterCount) {
 					newTile.tag = "Respawn";
 					newTile.name = "Home";
 				} else {
@@ -48,5 +48,7 @@ public class BoardController : MonoBehaviour {
 	private void scaleBackground(int DiameterCount) {
 		float scaleFactor = TileController.VERTICAL_SPACING * (0.5f + DiameterCount);
 		Background.transform.localScale = new Vector2(scaleFactor, scaleFactor);
+		// Update basic stress level for tiles
+		TileController.DistanceStressFactor = 30f / scaleFactor / scaleFactor;
 	}
 }

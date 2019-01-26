@@ -113,6 +113,7 @@ MonoBehaviour:
   StressLevel: 0
   mySprite: {fileID: 212923448530988410}
   myCenter: {fileID: 4952026113754986}
+  Home: {fileID: 0}
 --- !u!212 &212923448530988410
 SpriteRenderer:
   m_ObjectHideFlags: 1
@@ -148,7 +149,7 @@ SpriteRenderer:
   m_SortingLayer: -1
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: a9683570d8e787f4e8d7201f5a0862ec, type: 3}
-  m_Color: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+  m_Color: {r: 0.03957611, g: 0.89705884, b: 0.32934624, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
