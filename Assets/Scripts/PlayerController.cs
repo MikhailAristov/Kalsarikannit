@@ -36,7 +36,7 @@ public class PlayerController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update() {
-		if(isMoving && (Input.GetMouseButtonUp(1) || Input.GetKeyUp(KeyCode.Escape))) {
+		if(isMoving && Input.GetMouseButtonUp(1)) {
 			emergencyStop = true;
 			PathDisplay.enabled = false;
 		} 
