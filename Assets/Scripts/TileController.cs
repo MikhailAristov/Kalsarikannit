@@ -56,7 +56,7 @@ public class TileController : MonoBehaviour {
 		BaseStressLevel = 1f - 2f / (1f + DistanceStressFactor * DistanceToHome * DistanceToHome);
 		// Update from neighbours
 		if(myCenter.GetComponentsInChildren<TargetController>().Length == 0) {
-			float stressFromNeighbour = 0.6f * GetMaxNeighbourStress();
+			float stressFromNeighbour = 0.8f * GetMaxNeighbourStress();
 			if(!Util.Approx(StressLevel, stressFromNeighbour)) {
 				StressLevel = Mathf.Lerp(StressLevel, stressFromNeighbour, 100f * Time.fixedDeltaTime);
 			}

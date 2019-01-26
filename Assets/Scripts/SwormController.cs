@@ -31,7 +31,7 @@ public class SwormController : MonoBehaviour {
 	}
 
 	public void MoveToPool(Transform pool) {
-		transform.parent = pool;
+		transform.SetParent(pool);
 		transform.localPosition = Vector2.zero;
 		Head = null;
 		Body.enabled = false;

@@ -16,12 +16,12 @@ public class BoardController : MonoBehaviour {
 	public PlayerController Player;
 	public TileController HomeTile;
 
-	public const int VERTICAL_SIZE = 11;
+	public const int VERTICAL_SIZE = 25;
 
 	public const int MAX_STANDING_STRESS_FACTORS = VERTICAL_SIZE * VERTICAL_SIZE / 40;
 	private int currentStandingStressFactors = 0;
 
-	public const int MAX_SWORMS = 1; //VERTICAL_SIZE * VERTICAL_SIZE / 60;
+	public const int MAX_SWORMS = VERTICAL_SIZE * VERTICAL_SIZE / 60;
 	private int currentSworms = 0;
 
 	public List<TileController> AllTiles;
@@ -33,7 +33,7 @@ public class BoardController : MonoBehaviour {
 
 		takePlayerHome();
 
-		//StartCoroutine(ManageStandingStressFactors());
+		StartCoroutine(ManageStandingStressFactors());
 		StartCoroutine(ManageSworms());
 	}
 	
@@ -131,10 +131,10 @@ public class BoardController : MonoBehaviour {
 			// Wait until a new stress factor can be added
 			yield return new WaitUntil(() => currentSworms < MAX_SWORMS);
 			// Update waiting time
-			nextSwormAt = Time.timeSinceLevelLoad + Mathf.Max(1f, currentSworms);
+			nextSwormAt = Time.timeSinceLevelLoad + Mathf.Max(3f, currentSworms);
 			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextSwormAt);
 			// Spawn a new stress factor
-			spawnSworm(7, getRandomFreeTile());
+			spawnSworm(Mathf.RoundToInt(Mathf.Sqrt(VERTICAL_SIZE)) + 1, getRandomFreeTile());
 		}
 	}
 
@@ -145,10 +145,10 @@ public class BoardController : MonoBehaviour {
 		if(ctrl == null) {
 			GameObject newSworm = GameObject.Instantiate(SwormPrefab);
 			newSworm.name = Util.GetUniqueName("Sworm");
-			newSworm.transform.SetParent(SwormPool);
 			ctrl = newSworm.GetComponent<SwormController>();
 		}
 		// Place on tile and return
+		ctrl.transform.SetParent(transform);
 		ctrl.Reset(Length, onTile);
 		currentSworms += 1;
 		return ctrl;
