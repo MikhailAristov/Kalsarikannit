@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour {
 	public TileController CurrentTile;
 	public TileController TargetTile;
 	private List<TileController> PathToTarget;
+	public LineRenderer PathDisplay;
 
 	private Vector2 initSpriteScale, pulsingSpriteScale;
 
@@ -82,6 +83,7 @@ public class PlayerController : MonoBehaviour {
 	void OnMouseMovedFromTile(TileController tile) {
 		if(TargetTile = tile) {
 			TargetTile = null;
+			HidePathToTarget();
 		}
 	}
 
@@ -134,13 +136,25 @@ public class PlayerController : MonoBehaviour {
 					cameFrom.Add(n, current);
 				}
 				gScore[n] = tentativeGScore;
-				fScore[n] = tentativeGScore + Vector2.Distance(n.transform.localPosition, goal.transform.localPosition);
+				fScore[n] = tentativeGScore + Mathf.Max(TileController.VERTICAL_SPACING, Vector2.Distance(n.transform.localPosition, goal.transform.localPosition));
 			}
 		}
 		Debug.LogError("No path to target found!");
 	}
 
 	private void DisplayPathToTarget() {
-		Util.DisplayList(PathToTarget);
+		Debug.Assert(PathToTarget.Count > 1);
+		Vector3[] pathPositions = new Vector3[PathToTarget.Count];
+		for(int i = 0; i < PathToTarget.Count; i++) {
+			pathPositions[i] = PathToTarget[i].transform.position - transform.position;	
+		}
+		// Adapt the line
+		PathDisplay.enabled = true;
+		PathDisplay.positionCount = PathToTarget.Count;
+		PathDisplay.SetPositions(pathPositions);
+	}
+
+	private void HidePathToTarget() {
+		PathDisplay.enabled = false;
 	}
 }

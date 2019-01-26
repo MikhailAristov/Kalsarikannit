@@ -384,3 +384,4 @@ MonoBehaviour:
   StandingTargetPool: {fileID: 1054057776}
   Player: {fileID: 0}
   HomeTile: {fileID: 0}
+  AllTiles: []
