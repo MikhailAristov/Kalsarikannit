@@ -56,13 +56,13 @@ public class TileController : MonoBehaviour {
 		BaseStressLevel = 1f - 2f / (1f + DistanceStressFactor * DistanceToHome * DistanceToHome);
 		// Update from neighbours
 		if(myCenter.GetComponentsInChildren<TargetController>().Length == 0) {
-			float stressFromNeighbour = 0.85f * GetMaxNeighbourStress();
+			float stressFromNeighbour = 0.6f * GetMaxNeighbourStress();
 			if(!Util.Approx(StressLevel, stressFromNeighbour)) {
 				StressLevel = Mathf.Lerp(StressLevel, stressFromNeighbour, 100f * Time.fixedDeltaTime);
 			}
 		}
 		// Update effective levels and colors
-		EffectiveStressLevel = BaseStressLevel + (1f - BaseStressLevel) * StressLevel;
+		EffectiveStressLevel = BaseStressLevel + (1f - BaseStressLevel) * StressLevel * (CompareTag("Respawn") ? 0.5f : 1f);
 		TargetHue = stressToHue(EffectiveStressLevel);
 		TargetColor = Color.HSVToRGB(TargetHue, 0.8f, 0.8f);
 	}

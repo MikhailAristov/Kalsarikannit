@@ -10,12 +10,19 @@ public class BoardController : MonoBehaviour {
 	public GameObject StandingTargetPrefab;
 	public Transform StandingTargetPool;
 
+	public GameObject SwormPrefab;
+	public Transform SwormPool;
+
 	public PlayerController Player;
 	public TileController HomeTile;
 
 	public const int VERTICAL_SIZE = 11;
+
 	public const int MAX_STANDING_STRESS_FACTORS = VERTICAL_SIZE * VERTICAL_SIZE / 40;
 	private int currentStandingStressFactors = 0;
+
+	public const int MAX_SWORMS = 1; //VERTICAL_SIZE * VERTICAL_SIZE / 60;
+	private int currentSworms = 0;
 
 	public List<TileController> AllTiles;
 
@@ -26,7 +33,8 @@ public class BoardController : MonoBehaviour {
 
 		takePlayerHome();
 
-		StartCoroutine(ManageStandingStressFactors());
+		//StartCoroutine(ManageStandingStressFactors());
+		StartCoroutine(ManageSworms());
 	}
 	
 	// Update is called once per frame
@@ -115,5 +123,39 @@ public class BoardController : MonoBehaviour {
 	void OnStressFactorEliminated(TargetController stressFactor) {
 		stressFactor.MoveToPool(StandingTargetPool);
 		currentStandingStressFactors -= 1;
+	}
+
+	private IEnumerator ManageSworms() {
+		float nextSwormAt;
+		while(true) {
+			// Wait until a new stress factor can be added
+			yield return new WaitUntil(() => currentSworms < MAX_SWORMS);
+			// Update waiting time
+			nextSwormAt = Time.timeSinceLevelLoad + Mathf.Max(1f, currentSworms);
+			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextSwormAt);
+			// Spawn a new stress factor
+			spawnSworm(7, getRandomFreeTile());
+		}
+	}
+
+	private SwormController spawnSworm(int Length, TileController onTile) {
+		// Check if there are targets in the pool
+		SwormController ctrl = SwormPool.GetComponentInChildren<SwormController>();
+		// If nothing found, spawn a new target
+		if(ctrl == null) {
+			GameObject newSworm = GameObject.Instantiate(SwormPrefab);
+			newSworm.name = Util.GetUniqueName("Sworm");
+			newSworm.transform.SetParent(SwormPool);
+			ctrl = newSworm.GetComponent<SwormController>();
+		}
+		// Place on tile and return
+		ctrl.Reset(Length, onTile);
+		currentSworms += 1;
+		return ctrl;
+	}
+
+	void OnSwormEliminated(SwormController sworm) {
+		sworm.MoveToPool(SwormPool);
+		currentSworms -= 1;
 	}
 }

@@ -275,6 +275,34 @@ Transform:
   m_Father: {fileID: 2035355799}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1362366125
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1362366126}
+  m_Layer: 0
+  m_Name: SwormPool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1362366126
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1362366125}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -100, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2035355799}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1543705337
 GameObject:
   m_ObjectHideFlags: 0
@@ -382,6 +410,7 @@ Transform:
   m_Children:
   - {fileID: 1543705338}
   - {fileID: 1054057776}
+  - {fileID: 1362366126}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -401,6 +430,9 @@ MonoBehaviour:
   StandingTargetPrefab: {fileID: 1374374616455232, guid: 17445eb72fd206b40ba2cc756b15e7d2,
     type: 2}
   StandingTargetPool: {fileID: 1054057776}
+  SwormPrefab: {fileID: 1215173211593466, guid: 2944f4ad750e05845b82d18d97be3904,
+    type: 2}
+  SwormPool: {fileID: 1362366126}
   Player: {fileID: 0}
   HomeTile: {fileID: 0}
   AllTiles: []
