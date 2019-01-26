@@ -14,6 +14,8 @@ public class BoardController : MonoBehaviour {
 	public TileController HomeTile;
 
 	public const int VERTICAL_SIZE = 11;
+	public const int MAX_STANDING_STRESS_FACTORS = VERTICAL_SIZE * VERTICAL_SIZE / 40;
+	private int currentStandingStressFactors = 0;
 
 	public List<TileController> AllTiles;
 
@@ -24,7 +26,7 @@ public class BoardController : MonoBehaviour {
 
 		takePlayerHome();
 
-		//spawnStandingTarget(getRandomFreeTile());
+		StartCoroutine(ManageStandingStressFactors());
 	}
 	
 	// Update is called once per frame
@@ -77,7 +79,25 @@ public class BoardController : MonoBehaviour {
 		return result;
 	}
 
-	private TargetController spawnStandingTarget(TileController onTile) {
+	private void takePlayerHome() {
+		Player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
+		Player.PlaceOnTile(HomeTile);
+	}
+
+	private IEnumerator ManageStandingStressFactors() {
+		float nextStressFactorAt;
+		while(true) {
+			// Wait until a new stress factor can be added
+			yield return new WaitUntil(() => currentStandingStressFactors < MAX_STANDING_STRESS_FACTORS);
+			// Update waiting time
+			nextStressFactorAt = Time.timeSinceLevelLoad + Mathf.Max(5f, currentStandingStressFactors);
+			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextStressFactorAt);
+			// Spawn a new stress factor
+			spawnStandingStressFactor(getRandomFreeTile());
+		}
+	}
+
+	private TargetController spawnStandingStressFactor(TileController onTile) {
 		// Check if there are targets in the pool
 		TargetController ctrl = StandingTargetPool.GetComponentInChildren<TargetController>();
 		// If nothing found, spawn a new target
@@ -88,11 +108,12 @@ public class BoardController : MonoBehaviour {
 		}
 		// Place on tile and return
 		ctrl.PlaceOnTile(onTile);
+		currentStandingStressFactors += 1;
 		return ctrl;
 	}
 
-	private void takePlayerHome() {
-		Player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
-		Player.PlaceOnTile(HomeTile);
+	void OnStressFactorEliminated(TargetController stressFactor) {
+		stressFactor.MoveToPool(StandingTargetPool);
+		currentStandingStressFactors -= 1;
 	}
 }

@@ -23,6 +23,8 @@ public class PlayerController : MonoBehaviour {
 	private bool isMoving;
 	private bool emergencyStop;
 
+	public TargetController AdjacentStressFactor;
+
 	// Use this for initialization
 	void Start() {
 		myBoard = GameObject.FindGameObjectWithTag("GameController").GetComponent<BoardController>();
@@ -47,7 +49,16 @@ public class PlayerController : MonoBehaviour {
 
 	void FixedUpdate() {
 		if(!Util.Approx(StressLevel, CurrentTile.EffectiveStressLevel)) {
-			StressLevel = Mathf.Lerp(StressLevel, CurrentTile.EffectiveStressLevel, 1f * Time.fixedDeltaTime);
+			// More stress is easier than less...
+			if(CurrentTile.EffectiveStressLevel < Mathf.Min(StressLevel, 0)) {
+				StressLevel = Mathf.Lerp(StressLevel, CurrentTile.EffectiveStressLevel, 0.5f * Time.fixedDeltaTime);
+			} else if(CurrentTile.EffectiveStressLevel > Mathf.Max(StressLevel, 0)) {
+				StressLevel = Mathf.Lerp(StressLevel, CurrentTile.EffectiveStressLevel, 3f * Time.fixedDeltaTime);
+			}
+		}
+
+		if(!isMoving && AdjacentStressFactor != null && AdjacentStressFactor.CurrentTile == CurrentTile) {
+			AdjacentStressFactor.Reduce(Time.fixedDeltaTime);
 		}
 	}
 
@@ -170,23 +181,25 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	private IEnumerator FollowPathToTarget() {
-		Debug.Assert(PathToTarget.Count > 1);
-		Debug.Assert(PathDisplay.enabled);
-		// Fix path while moving
-		PathDisplay.transform.SetParent(transform.parent);
-		// Jump across tiles
-		for(int i = 1; i < PathToTarget.Count; i++) {
-			// Update my parent
-			transform.SetParent(PathToTarget[i].myCenter);
-			CurrentTile = PathToTarget[i];
-			// Lerp to parent's local position zero
-			while(transform.localPosition.magnitude > Util.NEGLIGIBLE) {
-				transform.localPosition = Vector2.Lerp(transform.localPosition, Vector2.zero, 5f * Time.deltaTime);
-				yield return new WaitForEndOfFrame();
-			}
-			// If emergency stop requested, stop after the current jump
-			if(emergencyStop) {
-				break;
+		if(PathToTarget.Count > 1 && PathDisplay.enabled) {
+			// Stabilize path while moving
+			PathDisplay.transform.SetParent(transform.parent);
+			// Jump across tiles
+			for(int i = 1; i < PathToTarget.Count; i++) {
+				// Clear adjacent stress factor
+				AdjacentStressFactor = null;
+				// Update my parent
+				transform.SetParent(PathToTarget[i].myCenter);
+				CurrentTile = PathToTarget[i];
+				// Lerp to parent's local position zero
+				while(transform.localPosition.magnitude > Util.NEGLIGIBLE) {
+					transform.localPosition = Vector2.Lerp(transform.localPosition, Vector2.zero, 5f * Time.deltaTime);
+					yield return new WaitForEndOfFrame();
+				}
+				// If emergency stop requested, stop after the current jump
+				if(emergencyStop) {
+					break;
+				}
 			}
 		}
 		// Grab back the path display and hide it
@@ -195,6 +208,8 @@ public class PlayerController : MonoBehaviour {
 		PathDisplay.enabled = false;
 		TargetTile = null;
 		PathToTarget.Clear();
+		// Check for stress factors
+		AdjacentStressFactor = CurrentTile.myCenter.GetComponentInChildren<TargetController>();
 		// Stop moving
 		emergencyStop = false;
 		isMoving = false;

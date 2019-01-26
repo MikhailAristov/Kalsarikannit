@@ -10,8 +10,12 @@ public class TargetController : MonoBehaviour {
 	// How often, in seconds, does the target add to stress of its tile
 	public const float STRESS_INCREASE_INTERVAL = 2.0f;
 	private const float PULSE_EXPANSION_FACTOR = 1.5f;
+	public const float STRENGTH_ELIMINATION_THRESHOLD = 0.3f;
+	public const float INITIAL_SCALING_ON_SPAWN = 0.25f;
 
 	public float NextStressIncreaseIn = STRESS_INCREASE_INTERVAL;
+	[Range(0f, 1f)]
+	public float Strength = 1f;
 
 	private bool isPulsing = false;
 	private Vector2 initSpriteScale, pulsingSpriteScale;
@@ -20,11 +24,15 @@ public class TargetController : MonoBehaviour {
 	void Start() {
 		initSpriteScale = mySprite.transform.localScale;
 		pulsingSpriteScale = initSpriteScale * PULSE_EXPANSION_FACTOR;
+		mySprite.transform.localScale = INITIAL_SCALING_ON_SPAWN * Vector3.one;
 	}
 	
 	// Update is called once per frame
 	void Update() {
-		
+		if(Strength < STRENGTH_ELIMINATION_THRESHOLD) {
+			GameObject.FindGameObjectWithTag("GameController").SendMessage("OnStressFactorEliminated", this);
+			Strength = 1f;
+		}
 	}
 
 	public void PlaceOnTile(TileController target) {
@@ -33,11 +41,14 @@ public class TargetController : MonoBehaviour {
 		transform.localPosition = Vector2.zero;
 		CurrentTile = target;
 		NextStressIncreaseIn = STRESS_INCREASE_INTERVAL;
+		Strength = 1f;
 	}
 
 	public void MoveToPool(Transform pool) {
 		transform.parent = pool;
 		transform.localPosition = Vector2.zero;
+		transform.localScale = Vector3.one;
+		mySprite.transform.localScale = INITIAL_SCALING_ON_SPAWN * Vector3.one;
 		CurrentTile = null;
 	}
 
@@ -76,5 +87,10 @@ public class TargetController : MonoBehaviour {
 			yield return new WaitForEndOfFrame();
 		}
 		isPulsing = false;
+	}
+
+	public void Reduce(float deltaTime) {
+		Strength = Mathf.Lerp(Strength, 0f, 0.5f * deltaTime);
+		transform.localScale = new Vector3(Strength, Strength, 1f);
 	}
 }

@@ -55,7 +55,7 @@ public class TileController : MonoBehaviour {
 		// Update stress level
 		BaseStressLevel = 1f - 2f / (1f + DistanceStressFactor * DistanceToHome * DistanceToHome);
 		// Update from neighbours
-		if(myCenter.childCount == 0) {
+		if(myCenter.GetComponentsInChildren<TargetController>().Length == 0) {
 			float stressFromNeighbour = 0.85f * GetMaxNeighbourStress();
 			if(!Util.Approx(StressLevel, stressFromNeighbour)) {
 				StressLevel = Mathf.Lerp(StressLevel, stressFromNeighbour, 100f * Time.fixedDeltaTime);
@@ -108,6 +108,10 @@ public class TileController : MonoBehaviour {
 	}
 
 	void OnMouseEnter() {
+		GameObject.FindGameObjectWithTag("Player").SendMessage("OnMouseMovedOverTile", this);
+	}
+
+	void OnMouseDown() {
 		GameObject.FindGameObjectWithTag("Player").SendMessage("OnMouseMovedOverTile", this);
 	}
 
