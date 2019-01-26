@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour {
 	private const float PULSE_DURATION = 0.5f;
 
 	[Range(-1f, 1f)]
-	public float StressLevel = -0.5f;
+	public float StressLevel = LOW_STRESS_THRESHOLD;
 
 	public Transform mySprite;
 	public TileController CurrentTile;

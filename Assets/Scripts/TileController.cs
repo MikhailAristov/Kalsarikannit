@@ -24,6 +24,9 @@ public class TileController : MonoBehaviour {
 	public Transform myCenter;
 	public TileController Home;
 
+	private CircleCollider2D myCollider;
+	private List<TileController> myNeighbours;
+
 	public float DistanceToHome {
 		get { 
 			return (Home != null) ? Vector2.Distance(transform.position, Home.transform.position) : 0f;
@@ -33,6 +36,8 @@ public class TileController : MonoBehaviour {
 	// Use this for initialization
 	void Start() {
 		currentHue = getHue(mySprite.color);
+		myCollider = GetComponent<CircleCollider2D>();
+		myNeighbours = new List<TileController>();
 	}
 
 	// Update is called once per frame
@@ -51,6 +56,11 @@ public class TileController : MonoBehaviour {
 	void FixedUpdate() {
 		// Update stress level
 		BaseStressLevel = 1f - 2f / (1f + DistanceStressFactor * DistanceToHome * DistanceToHome);
+		// Update from neighbours
+		if(myCenter.childCount == 0) {
+			StressLevel = Mathf.Lerp(StressLevel, 0.85f * GetMaxNeighbourStress(), 100f * Time.fixedDeltaTime);
+		}
+		// Update effective levels and colors
 		EffectiveStressLevel = BaseStressLevel + (1f - BaseStressLevel) * StressLevel;
 		TargetHue = stressToHue(EffectiveStressLevel);
 		TargetColor = Color.HSVToRGB(TargetHue, 0.8f, 0.8f);
@@ -65,5 +75,33 @@ public class TileController : MonoBehaviour {
 	private float stressToHue(float stress) {
 		// Linear mapping from [-1,1] to [2/3,0]
 		return (1f - stress) / 3f;
+	}
+
+	private float GetMaxNeighbourStress() {
+		float result = 0;
+		if(myNeighbours.Count > 0) {
+			foreach(TileController n in myNeighbours) {
+				if(n.StressLevel > result) {
+					result = n.StressLevel;
+				}
+			}
+		}
+		return result;
+	}
+
+	void OnTriggerEnter2D(Collider2D other) {
+		// Try getting the tile controller
+		TileController ctrl = other.GetComponent<TileController>();
+		if(ctrl != null) {
+			myNeighbours.Add(ctrl);
+		}
+	}
+
+	void OnTriggerExit2D(Collider2D other) {
+		// Try getting the tile controller
+		TileController ctrl = other.GetComponent<TileController>();
+		if(ctrl != null && myNeighbours.Contains(ctrl)) {
+			myNeighbours.Remove(ctrl);
+		}
 	}
 }
