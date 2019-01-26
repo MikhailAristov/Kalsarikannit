@@ -20,6 +20,9 @@ public class PlayerController : MonoBehaviour {
 
 	private Vector2 initSpriteScale, pulsingSpriteScale;
 
+	private bool isMoving;
+	private bool emergencyStop;
+
 	// Use this for initialization
 	void Start() {
 		myBoard = GameObject.FindGameObjectWithTag("GameController").GetComponent<BoardController>();
@@ -31,7 +34,15 @@ public class PlayerController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update() {
-		
+		if(isMoving && (Input.GetMouseButtonUp(1) || Input.GetKeyUp(KeyCode.Escape))) {
+			emergencyStop = true;
+			PathDisplay.enabled = false;
+		} 
+
+		if(!isMoving && Input.GetMouseButtonUp(0)) {
+			isMoving = true;
+			StartCoroutine(FollowPathToTarget());
+		}
 	}
 
 	void FixedUpdate() {
@@ -73,7 +84,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void OnMouseMovedOverTile(TileController tile) {
-		if(tile != CurrentTile) {
+		if(!isMoving && tile != CurrentTile) {
 			TargetTile = tile;
 			RecalculatePathToTarget(tile);
 			DisplayPathToTarget();
@@ -81,7 +92,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void OnMouseMovedFromTile(TileController tile) {
-		if(TargetTile = tile) {
+		if(!isMoving && TargetTile == tile) {
 			TargetTile = null;
 			HidePathToTarget();
 		}
@@ -156,5 +167,36 @@ public class PlayerController : MonoBehaviour {
 
 	private void HidePathToTarget() {
 		PathDisplay.enabled = false;
+	}
+
+	private IEnumerator FollowPathToTarget() {
+		Debug.Assert(PathToTarget.Count > 1);
+		Debug.Assert(PathDisplay.enabled);
+		// Fix path while moving
+		PathDisplay.transform.SetParent(transform.parent);
+		// Jump across tiles
+		for(int i = 1; i < PathToTarget.Count; i++) {
+			// Update my parent
+			transform.SetParent(PathToTarget[i].myCenter);
+			CurrentTile = PathToTarget[i];
+			// Lerp to parent's local position zero
+			while(transform.localPosition.magnitude > Util.NEGLIGIBLE) {
+				transform.localPosition = Vector2.Lerp(transform.localPosition, Vector2.zero, 5f * Time.deltaTime);
+				yield return new WaitForEndOfFrame();
+			}
+			// If emergency stop requested, stop after the current jump
+			if(emergencyStop) {
+				break;
+			}
+		}
+		// Grab back the path display and hide it
+		PathDisplay.transform.SetParent(transform);
+		PathDisplay.transform.localPosition = Vector2.zero;
+		PathDisplay.enabled = false;
+		TargetTile = null;
+		PathToTarget.Clear();
+		// Stop moving
+		emergencyStop = false;
+		isMoving = false;
 	}
 }

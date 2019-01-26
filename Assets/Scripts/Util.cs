@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Util : MonoBehaviour {
 
-	public const float NEGLIGIBLE = 1e-5f;
+	public const float NEGLIGIBLE = 1e-2f;
 
 	// Use this for initialization
 	void Start() {
