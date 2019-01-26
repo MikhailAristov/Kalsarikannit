@@ -10,12 +10,17 @@ public class BoardController : MonoBehaviour {
 	public GameObject StandingTargetPrefab;
 	public Transform StandingTargetPool;
 
+	public PlayerController Player;
+	public TileController HomeTile;
+
 	public const int VERTICAL_SIZE = 11;
 
 	// Use this for initialization
 	void Start() {
 		placeTiles(VERTICAL_SIZE);
 		scaleBackground(VERTICAL_SIZE);
+
+		takePlayerHome();
 
 		spawnStandingTarget(getRandomFreeTile());
 	}
@@ -43,8 +48,9 @@ public class BoardController : MonoBehaviour {
 				if(x == 0 && y == halfDiameterCount) {
 					newTile.tag = "Respawn";
 					newTile.name = "Home";
+					HomeTile = newTile.GetComponent<TileController>();
 				} else {
-					newTile.name = "Tile [" + Util.GetNewGuid() + "]";
+					newTile.name = Util.GetUniqueName("Tile");
 				}
 			}
 		}
@@ -79,5 +85,10 @@ public class BoardController : MonoBehaviour {
 		// Place on tile and return
 		ctrl.PlaceOnTile(onTile);
 		return ctrl;
+	}
+
+	private void takePlayerHome() {
+		Player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
+		Player.PlaceOnTile(HomeTile);
 	}
 }
