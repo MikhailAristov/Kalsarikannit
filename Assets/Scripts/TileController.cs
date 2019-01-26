@@ -13,7 +13,8 @@ public class TileController : MonoBehaviour {
 	[Range(0f, 1f)]
 	public float StressLevel = 0f;
 	private float BaseStressLevel = 0f;
-	private float EffectiveStressLevel = 0f;
+	[Range(-1f, 1f)]
+	public float EffectiveStressLevel = 0f;
 
 	private float currentHue;
 	private float TargetHue;
@@ -42,7 +43,7 @@ public class TileController : MonoBehaviour {
 		}
 
 		if(!Util.Approx(currentHue, TargetHue)) {
-			mySprite.color = Color.Lerp(mySprite.color, TargetColor, 0.1f);
+			mySprite.color = Color.Lerp(mySprite.color, TargetColor, 2f * Time.deltaTime);
 			currentHue = getHue(mySprite.color);
 		}
 	}

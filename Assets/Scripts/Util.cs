@@ -29,4 +29,8 @@ public class Util : MonoBehaviour {
 		Guid g = Guid.NewGuid();
 		return g.ToString();
 	}
+
+	public static string GetUniqueName(string ClassName) {
+		return String.Format("{0} [{1}]", ClassName, GetNewGuid());
+	}
 }

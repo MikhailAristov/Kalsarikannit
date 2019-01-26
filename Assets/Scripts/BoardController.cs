@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class BoardController : MonoBehaviour {
 
-	public GameObject TilePrefab;
 	public Transform Background;
+	public GameObject TilePrefab;
+
+	public GameObject StandingTargetPrefab;
+	public Transform StandingTargetPool;
 
 	public const int VERTICAL_SIZE = 11;
 
@@ -13,6 +16,8 @@ public class BoardController : MonoBehaviour {
 	void Start() {
 		placeTiles(VERTICAL_SIZE);
 		scaleBackground(VERTICAL_SIZE);
+
+		spawnStandingTarget(getRandomFreeTile());
 	}
 	
 	// Update is called once per frame
@@ -50,5 +55,29 @@ public class BoardController : MonoBehaviour {
 		Background.transform.localScale = new Vector2(scaleFactor, scaleFactor);
 		// Update basic stress level for tiles
 		TileController.DistanceStressFactor = 30f / scaleFactor / scaleFactor;
+	}
+
+	private TileController getRandomFreeTile() {
+		GameObject[] listOfTiles = GameObject.FindGameObjectsWithTag("Tile");
+		TileController result = null;
+		// Pick a random free result (endless loop negligible for large enough boards)
+		do {
+			result = listOfTiles[UnityEngine.Random.Range(0, listOfTiles.Length)].GetComponent<TileController>();
+		} while(result.myCenter.childCount > 0);
+		return result;
+	}
+
+	private TargetController spawnStandingTarget(TileController onTile) {
+		// Check if there are targets in the pool
+		TargetController ctrl = StandingTargetPool.GetComponentInChildren<TargetController>();
+		// If nothing found, spawn a new target
+		if(ctrl == null) {
+			GameObject newTarget = GameObject.Instantiate(StandingTargetPrefab);
+			newTarget.name = Util.GetUniqueName("Standing Target");
+			ctrl = newTarget.GetComponent<TargetController>();
+		}
+		// Place on tile and return
+		ctrl.PlaceOnTile(onTile);
+		return ctrl;
 	}
 }
