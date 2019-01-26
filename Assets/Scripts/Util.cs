@@ -33,4 +33,12 @@ public class Util : MonoBehaviour {
 	public static string GetUniqueName(string ClassName) {
 		return String.Format("{0} [{1}]", ClassName, GetNewGuid());
 	}
+
+	public static void DisplayList<T>(List<T> list) where T:MonoBehaviour {
+		string names = "";
+		foreach(T t in list) {
+			names += (t.name + "\n");
+		}
+		Debug.Log("list: \n" + names);
+	}
 }

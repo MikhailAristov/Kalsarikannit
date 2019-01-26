@@ -24,8 +24,7 @@ public class TileController : MonoBehaviour {
 	public Transform myCenter;
 	public TileController Home;
 
-	private CircleCollider2D myCollider;
-	private List<TileController> myNeighbours;
+	public List<TileController> myNeighbours;
 
 	public float DistanceToHome {
 		get { 
@@ -36,7 +35,6 @@ public class TileController : MonoBehaviour {
 	// Use this for initialization
 	void Start() {
 		currentHue = getHue(mySprite.color);
-		myCollider = GetComponent<CircleCollider2D>();
 		myNeighbours = new List<TileController>();
 	}
 
@@ -58,7 +56,10 @@ public class TileController : MonoBehaviour {
 		BaseStressLevel = 1f - 2f / (1f + DistanceStressFactor * DistanceToHome * DistanceToHome);
 		// Update from neighbours
 		if(myCenter.childCount == 0) {
-			StressLevel = Mathf.Lerp(StressLevel, 0.85f * GetMaxNeighbourStress(), 100f * Time.fixedDeltaTime);
+			float stressFromNeighbour = 0.85f * GetMaxNeighbourStress();
+			if(!Util.Approx(StressLevel, stressFromNeighbour)) {
+				StressLevel = Mathf.Lerp(StressLevel, stressFromNeighbour, 100f * Time.fixedDeltaTime);
+			}
 		}
 		// Update effective levels and colors
 		EffectiveStressLevel = BaseStressLevel + (1f - BaseStressLevel) * StressLevel;
@@ -93,6 +94,7 @@ public class TileController : MonoBehaviour {
 		// Try getting the tile controller
 		TileController ctrl = other.GetComponent<TileController>();
 		if(ctrl != null) {
+			Debug.Assert(ctrl != this);
 			myNeighbours.Add(ctrl);
 		}
 	}
@@ -103,5 +105,13 @@ public class TileController : MonoBehaviour {
 		if(ctrl != null && myNeighbours.Contains(ctrl)) {
 			myNeighbours.Remove(ctrl);
 		}
+	}
+
+	void OnMouseEnter() {
+		GameObject.FindGameObjectWithTag("Player").SendMessage("OnMouseMovedOverTile", this);
+	}
+
+	void OnMouseExit() {
+		GameObject.FindGameObjectWithTag("Player").SendMessage("OnMouseMovedFromTile", this);
 	}
 }

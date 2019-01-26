@@ -15,6 +15,8 @@ public class BoardController : MonoBehaviour {
 
 	public const int VERTICAL_SIZE = 11;
 
+	public List<TileController> AllTiles;
+
 	// Use this for initialization
 	void Start() {
 		placeTiles(VERTICAL_SIZE);
@@ -22,7 +24,7 @@ public class BoardController : MonoBehaviour {
 
 		takePlayerHome();
 
-		spawnStandingTarget(getRandomFreeTile());
+		//spawnStandingTarget(getRandomFreeTile());
 	}
 	
 	// Update is called once per frame
@@ -54,6 +56,8 @@ public class BoardController : MonoBehaviour {
 				}
 			}
 		}
+		AllTiles = new List<TileController>();
+		AllTiles.AddRange(GetComponentsInChildren<TileController>());
 	}
 
 	private void scaleBackground(int DiameterCount) {
