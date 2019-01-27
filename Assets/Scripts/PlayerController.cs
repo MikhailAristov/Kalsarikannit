@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour {
 	void FixedUpdate() {
 		if(!Util.Approx(StressLevel, CurrentTile.EffectiveStressLevel)) {
 			// More stress is easier than less...
-			if(CurrentTile.EffectiveStressLevel < Mathf.Min(StressLevel, 0) && CurrentTile.CompareTag("Respawn")) {
+			if(CurrentTile.EffectiveStressLevel < Mathf.Min(StressLevel, 0) && CurrentTile.CompareTag("Home")) {
 				StressLevel = Mathf.Lerp(StressLevel, CurrentTile.EffectiveStressLevel, 0.5f * Time.fixedDeltaTime);
 			} else if(CurrentTile.EffectiveStressLevel > Mathf.Max(StressLevel, 0)) {
 				StressLevel = Mathf.Lerp(StressLevel, CurrentTile.EffectiveStressLevel, 3f * Time.fixedDeltaTime);

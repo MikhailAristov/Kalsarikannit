@@ -20,6 +20,7 @@ public class BoardController : MonoBehaviour {
 
 	public const int MAX_STANDING_STRESS_FACTORS = VERTICAL_SIZE * VERTICAL_SIZE / 40;
 	private int currentStandingStressFactors = 0;
+	public int StressFactorsEliminated = 0;
 
 	public const int MAX_SWORMS = VERTICAL_SIZE * VERTICAL_SIZE / 60;
 	private int currentSworms = 0;
@@ -29,7 +30,7 @@ public class BoardController : MonoBehaviour {
 	// Use this for initialization
 	void Start() {
 		placeTiles(VERTICAL_SIZE);
-		scaleBackground(VERTICAL_SIZE);
+		scaleTheBoard(VERTICAL_SIZE);
 
 		takePlayerHome();
 
@@ -60,7 +61,7 @@ public class BoardController : MonoBehaviour {
 					new Vector2(TileController.HORIZONTAL_SPACING * x, vertOffset + TileController.VERTICAL_SPACING * y);
 				// Manipulate names
 				if(x == 0 && y == halfDiameterCount) {
-					newTile.tag = "Respawn";
+					newTile.tag = "Home";
 					newTile.name = "Home";
 					HomeTile = newTile.GetComponent<TileController>();
 				} else {
@@ -72,21 +73,33 @@ public class BoardController : MonoBehaviour {
 		AllTiles.AddRange(GetComponentsInChildren<TileController>());
 	}
 
-	private void scaleBackground(int DiameterCount) {
+	private void scaleTheBoard(int DiameterCount) {
 		float scaleFactor = TileController.VERTICAL_SPACING * (0.5f + DiameterCount);
 		Background.transform.localScale = new Vector2(scaleFactor, scaleFactor);
 		// Update basic stress level for tiles
 		TileController.DistanceStressFactor = 30f / scaleFactor / scaleFactor;
 	}
 
-	private TileController getRandomFreeTile() {
-		GameObject[] listOfTiles = GameObject.FindGameObjectsWithTag("Tile");
-		TileController result = null;
-		// Pick a random free result (endless loop negligible for large enough boards)
-		do {
-			result = listOfTiles[UnityEngine.Random.Range(0, listOfTiles.Length)].GetComponent<TileController>();
-		} while(result.myCenter.childCount > 0);
-		return result;
+	private TileController GetRandomFreeTileWeightedByStress() {
+		Dictionary<TileController, float> availableTiles = new Dictionary<TileController, float>();
+		foreach(TileController t in AllTiles) {
+			// Implicit: Not Home tile, either
+			if(!t.IsOccupied && t.CompareTag("Tile")) {
+				availableTiles.Add(t, t.EffectiveStressLevel + 1f);
+			}
+		}
+		return Util.PickWeightedRandom(availableTiles);
+	}
+
+	private TileController GetRandomTileNotOnEdge() {
+		List<TileController> availableTiles = new List<TileController>();
+		foreach(TileController t in AllTiles) {
+			// Implicit: Not Home tile, either
+			if(!t.IsOnEdge && t.CompareTag("Tile")) {
+				availableTiles.Add(t);
+			}
+		}
+		return Util.PickAtRandom(availableTiles);
 	}
 
 	private void takePlayerHome() {
@@ -98,12 +111,12 @@ public class BoardController : MonoBehaviour {
 		float nextStressFactorAt;
 		while(true) {
 			// Wait until a new stress factor can be added
-			yield return new WaitUntil(() => currentStandingStressFactors < MAX_STANDING_STRESS_FACTORS);
+			yield return new WaitUntil(() => currentStandingStressFactors < Mathf.Max(0, MAX_STANDING_STRESS_FACTORS - (StressFactorsEliminated / 3)));
 			// Update waiting time
 			nextStressFactorAt = Time.timeSinceLevelLoad + Mathf.Max(5f, currentStandingStressFactors);
 			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextStressFactorAt);
 			// Spawn a new stress factor
-			spawnStandingStressFactor(getRandomFreeTile());
+			spawnStandingStressFactor(GetRandomFreeTileWeightedByStress());
 		}
 	}
 
@@ -125,18 +138,23 @@ public class BoardController : MonoBehaviour {
 	void OnStressFactorEliminated(TargetController stressFactor) {
 		stressFactor.MoveToPool(StandingTargetPool);
 		currentStandingStressFactors -= 1;
+		// Update base stress curve parameters
+		StressFactorsEliminated += 1;
+		if(StressFactorsEliminated > 2) {
+			TileController.DistanceStressFactor *= (float)StressFactorsEliminated / (StressFactorsEliminated + 1);
+		}
 	}
 
 	private IEnumerator ManageSworms() {
 		float nextSwormAt;
 		while(true) {
 			// Wait until a new stress factor can be added
-			yield return new WaitUntil(() => currentSworms < MAX_SWORMS);
+			yield return new WaitUntil(() => currentSworms < Mathf.Max(1,  MAX_SWORMS - Mathf.Max(0, StressFactorsEliminated - 2)));
 			// Update waiting time
 			nextSwormAt = Time.timeSinceLevelLoad + Mathf.Max(3f, currentSworms);
 			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextSwormAt);
 			// Spawn a new stress factor
-			spawnSworm(Mathf.RoundToInt(Mathf.Sqrt(VERTICAL_SIZE)) + 1, getRandomFreeTile());
+			spawnSworm(Mathf.RoundToInt(Mathf.Sqrt(VERTICAL_SIZE)) + 1,  GetRandomTileNotOnEdge());
 		}
 	}
 

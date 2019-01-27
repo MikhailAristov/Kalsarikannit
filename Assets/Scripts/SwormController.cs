@@ -68,9 +68,9 @@ public class SwormController : MonoBehaviour {
 					SegmentLifetime.Remove(t);
 				}
 			}
-			// Unless the head is at the edge of the board (i.e. has less than 5 neighbors, move it onwards, extending the sworm
+			// Unless the head is at the edge of the board, move it onwards, extending the sworm
 			if(!stopped) {
-				if(Head.myNeighbours.Count > 4) {
+				if(!Head.IsOnEdge) {
 					TileController newHead = FindFreeTileForHead();
 					if(newHead != null) {
 						Segments.Add(newHead);
@@ -104,17 +104,13 @@ public class SwormController : MonoBehaviour {
 	}
 
 	private TileController FindFreeTileForHead() {
-		List<TileController> freeTiles = new List<TileController>();
+		Dictionary<TileController, float> availableTiles = new Dictionary<TileController, float>();
 		foreach(TileController t in Head.myNeighbours) {
 			if(!Segments.Contains(t) && t.CompareTag("Tile")) {
-				freeTiles.Add(t);
+				availableTiles.Add(t, t.EffectiveStressLevel + 1f);
 			}
 		}
-		if(freeTiles.Count > 0) {
-			return freeTiles[UnityEngine.Random.Range(0, freeTiles.Count)];
-		} else {
-			return null;
-		}
+		return Util.PickWeightedRandom(availableTiles);
 	}
 
 	private void UpdateDisplay() {

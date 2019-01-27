@@ -25,6 +25,17 @@ public class TileController : MonoBehaviour {
 	public TileController Home;
 
 	public List<TileController> myNeighbours;
+	public bool IsOnEdge {
+		get { 
+			return (myNeighbours.Count < 6);
+		}
+	}
+
+	public bool IsOccupied {
+		get { 
+			return (myCenter.childCount > 0);
+		}
+	}
 
 	public float DistanceToHome {
 		get { 
@@ -42,7 +53,7 @@ public class TileController : MonoBehaviour {
 	void Update() {
 		// Find the home tile
 		if(Home == null) {
-			Home = GameObject.FindGameObjectWithTag("Respawn").GetComponent<TileController>(); // not NullRef secure, but who cares
+			Home = GameObject.FindGameObjectWithTag("Home").GetComponent<TileController>(); // not NullRef secure, but who cares
 		}
 
 		if(!Util.Approx(currentHue, TargetHue)) {
@@ -62,7 +73,7 @@ public class TileController : MonoBehaviour {
 			}
 		}
 		// Update effective levels and colors
-		EffectiveStressLevel = BaseStressLevel + (1f - BaseStressLevel) * StressLevel * (CompareTag("Respawn") ? 0.5f : 1f);
+		EffectiveStressLevel = BaseStressLevel + (1f - BaseStressLevel) * StressLevel * (CompareTag("Home") ? 0.5f : 1f);
 		TargetHue = stressToHue(EffectiveStressLevel);
 		TargetColor = Color.HSVToRGB(TargetHue, 0.8f, 0.8f);
 	}

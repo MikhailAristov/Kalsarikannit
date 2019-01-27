@@ -41,4 +41,36 @@ public class Util : MonoBehaviour {
 		}
 		Debug.Log("list: \n" + names);
 	}
+
+	public static T PickAtRandom<T>(List<T> options) {
+		if(options.Count > 0) {			
+			return options[UnityEngine.Random.Range(0, options.Count)];
+		} else {
+			return default(T);
+		}
+	}
+
+	public static T PickWeightedRandom<T>(Dictionary<T, float> options, float sum = 0) {
+		if(options.Count > 0) {
+			// Calculate the sum of all option weights if necessary
+			if(sum <= 0) {
+				sum = 0;
+				foreach(T key in options.Keys) {
+					sum += options[key];
+				}
+			}
+			// Pick a random value up to the sum and keep subtracting weights from it until it reaches zero
+			float randomVal = UnityEngine.Random.Range(0f, sum);
+			foreach(T key in options.Keys) {
+				Debug.Assert(options[key] >= 0f);
+				randomVal -= options[key];
+				if(randomVal < 0) {
+					return key;
+				}
+			}
+			throw new ArgumentException("The given sum (" + sum + ") didn't match the contents of the options");
+		} else {
+			return default(T);
+		}
+	}
 }

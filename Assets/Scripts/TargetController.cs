@@ -42,6 +42,8 @@ public class TargetController : MonoBehaviour {
 		CurrentTile = target;
 		NextStressIncreaseIn = STRESS_INCREASE_INTERVAL;
 		Strength = 1f;
+		// Apply random rotation
+		transform.RotateAround(transform.position, Vector3.forward, UnityEngine.Random.value * 360f);
 	}
 
 	public void MoveToPool(Transform pool) {
