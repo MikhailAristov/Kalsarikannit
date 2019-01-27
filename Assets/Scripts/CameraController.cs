@@ -6,15 +6,20 @@ public class CameraController : MonoBehaviour {
 
 	public PlayerController Player;
 
+	private float MaxDistanceToPlayerX;
+	private float MaxDistanceToPlayerY;
+
 	// Use this for initialization
 	void Start() {
-		
+		MaxDistanceToPlayerX = Camera.main.orthographicSize * Camera.main.aspect / 2f;
+		MaxDistanceToPlayerY = Camera.main.orthographicSize / 2f;
 	}
 	
 	// Update is called once per frame
 	void Update() {
-		if(!Util.Approx(transform.position, Player.transform.position)) {
-			transform.position = Vector3.Lerp(transform.position, new Vector3(Player.transform.position.x, Player.transform.position.y, transform.position.z), 5f * Time.deltaTime);
+		Vector2 PlayerRelativePosition = transform.position - Player.transform.position;
+		if(Mathf.Abs(PlayerRelativePosition.x) > MaxDistanceToPlayerX || Mathf.Abs(PlayerRelativePosition.y) > MaxDistanceToPlayerY) {
+			transform.position = Vector3.Lerp(transform.position, new Vector3(Player.transform.position.x, Player.transform.position.y, transform.position.z), 0.5f * Time.deltaTime);
 		}
 
 		if(Input.GetKeyUp(KeyCode.Space)) {

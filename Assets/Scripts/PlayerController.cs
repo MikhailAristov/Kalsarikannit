@@ -8,7 +8,9 @@ public class PlayerController : MonoBehaviour {
 	public const float HIGH_STRESS_THRESHOLD = 0.8f;
 	private const float PULSE_EXPANSION_FACTOR = 1.5f;
 	private const float PULSE_DURATION = 0.5f;
-	private const float SINGLE_ROTATION_DURATION = 2f;
+	private const float SINGLE_ROTATION_DURATION = 1f;
+	private const float STEP_DURATION = 0.5f;
+	private const float RUNNING_STEP_DURATION = 0.2f;
 
 	[Range(-1f, 1f)]
 	public float StressLevel = LOW_STRESS_THRESHOLD;
@@ -222,10 +224,13 @@ public class PlayerController : MonoBehaviour {
 				transform.SetParent(PathToTarget[i].myCenter);
 				CurrentTile = PathToTarget[i];
 				// Lerp to parent's local position zero
-				while(transform.localPosition.magnitude > Util.NEGLIGIBLE) {
-					transform.localPosition = Vector2.Lerp(transform.localPosition, Vector2.zero, 5f * Time.deltaTime);
+				Vector2 startingPos = transform.localPosition;
+				float lastDistToTarget = float.MaxValue;
+				do {
+					lastDistToTarget = transform.localPosition.magnitude;
+					transform.Translate(-startingPos / STEP_DURATION * Time.deltaTime);
 					yield return new WaitForEndOfFrame();
-				}
+				} while(transform.localPosition.magnitude > Util.NEGLIGIBLE && lastDistToTarget > transform.localPosition.magnitude);
 				// If emergency stop requested, stop after the current jump
 				if(emergencyStop) {
 					break;
@@ -272,10 +277,13 @@ public class PlayerController : MonoBehaviour {
 				transform.SetParent(PathToTarget[i].myCenter);
 				CurrentTile = PathToTarget[i];
 				// Lerp to parent's local position zero
-				while(transform.localPosition.magnitude > Util.NEGLIGIBLE) {
-					transform.localPosition = Vector2.Lerp(transform.localPosition, Vector2.zero, 15f * Time.deltaTime);
+				Vector2 startingPos = transform.localPosition;
+				float lastDistToTarget = float.MaxValue;
+				do {
+					lastDistToTarget = transform.localPosition.magnitude;
+					transform.Translate(-startingPos / RUNNING_STEP_DURATION * Time.deltaTime);
 					yield return new WaitForEndOfFrame();
-				}
+				} while(transform.localPosition.magnitude > Util.NEGLIGIBLE && lastDistToTarget > transform.localPosition.magnitude);
 			}
 		}
 		isFleeing = false;
