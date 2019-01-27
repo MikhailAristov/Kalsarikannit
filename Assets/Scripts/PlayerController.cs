@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour {
 
 	public const float LOW_STRESS_THRESHOLD = -0.5f;
-	public const float HIGH_STRESS_THRESHOLD = 0.9f;
+	public const float HIGH_STRESS_THRESHOLD = 0.8f;
 	private const float PULSE_EXPANSION_FACTOR = 1.5f;
 	private const float PULSE_DURATION = 0.5f;
 	private const float SINGLE_ROTATION_DURATION = 2f;
@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour {
 
 	public BoardController myBoard;
 	public Transform mySprite;
+	public SpriteRenderer[] myEyes = new SpriteRenderer[2];
 	public TileController CurrentTile;
 	public TileController TargetTile;
 	private List<TileController> PathToTarget;
@@ -22,11 +23,17 @@ public class PlayerController : MonoBehaviour {
 
 	private Vector2 initSpriteScale, pulsingSpriteScale;
 
+	private bool isSleeping;
 	private bool isFleeing;
 	private bool isMoving;
 	private bool emergencyStop;
 
 	public TargetController AdjacentStressFactor;
+	public bool ProcessingStressFactor {
+		get { 
+			return (!isMoving && AdjacentStressFactor != null && AdjacentStressFactor.CurrentTile == CurrentTile);
+		}
+	}
 
 	// Use this for initialization
 	void Start() {
@@ -39,7 +46,12 @@ public class PlayerController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update() {
-		if(!isFleeing && isMoving && Input.GetMouseButtonUp(1)) {
+		if(!isFleeing && !isMoving && !isSleeping && myBoard.EffectiveMaxStressFactors < 1 && CurrentTile.CompareTag("Home")) {
+			isSleeping = true;
+			StartCoroutine(GoToSleep());
+		}
+
+		if(!isFleeing && isMoving && !isSleeping && Input.GetMouseButtonUp(1)) {
 			emergencyStop = true;
 			PathDisplay.enabled = false;
 		} 
@@ -75,7 +87,7 @@ public class PlayerController : MonoBehaviour {
 			StartCoroutine(RunHome());
 		}
 
-		if(!isMoving && AdjacentStressFactor != null && AdjacentStressFactor.CurrentTile == CurrentTile) {
+		if(ProcessingStressFactor) {
 			AdjacentStressFactor.Reduce(Time.fixedDeltaTime);
 		}
 	}
@@ -113,7 +125,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void OnMouseMovedOverTile(TileController tile) {
-		if(!isFleeing && !isMoving && tile != CurrentTile) {
+		if(!isSleeping && !isFleeing && !isMoving && tile != CurrentTile) {
 			TargetTile = tile;
 			RecalculatePathToTarget(tile);
 			DisplayPathToTarget();
@@ -237,7 +249,15 @@ public class PlayerController : MonoBehaviour {
 		// Wait until the character stops moving, if necessary
 		yield return new WaitUntil(() => !isMoving);
 		// Wait until the character removes the stress factor fully
-		yield return new WaitUntil(() => AdjacentStressFactor == null || AdjacentStressFactor.CurrentTile != CurrentTile);
+		if(ProcessingStressFactor) {
+			yield return new WaitWhile(() => ProcessingStressFactor);
+			// Second breath
+			if(UnityEngine.Random.value < myBoard.StressFactorProgress) {
+				StressLevel /= 2;
+				isFleeing = false;
+				yield break;
+			}
+		}
 		// Calculate path to home but don't display it
 		PathDisplay.enabled = false;
 		TargetTile = GameObject.FindGameObjectWithTag("Home").GetComponent<TileController>();
@@ -259,5 +279,16 @@ public class PlayerController : MonoBehaviour {
 			}
 		}
 		isFleeing = false;
+	}
+
+	private IEnumerator GoToSleep() {
+		SpriteRenderer lEye = myEyes[0], rEye = myEyes[1];
+		Vector3 closedEye = new Vector3(lEye.transform.localScale.x, 0, lEye.transform.localScale.y);
+		while(lEye.transform.localScale.y > Util.NEGLIGIBLE * 3 && rEye.transform.localScale.y > Util.NEGLIGIBLE * 3) {
+			lEye.transform.localScale = Vector3.Lerp(lEye.transform.localScale, closedEye, 0.1f * Time.deltaTime);
+			rEye.transform.localScale = Vector3.Lerp(rEye.transform.localScale, closedEye, 0.1f * Time.deltaTime);
+			yield return new WaitForEndOfFrame();
+		}
+		myBoard.SendMessage("OnPlayerAsleep");
 	}
 }

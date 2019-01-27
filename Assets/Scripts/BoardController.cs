@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class BoardController : MonoBehaviour {
 
+	public Canvas ThankYou;
 	public Transform Background;
 	public GameObject TilePrefab;
 
@@ -16,11 +17,23 @@ public class BoardController : MonoBehaviour {
 	public PlayerController Player;
 	public TileController HomeTile;
 
-	public const int VERTICAL_SIZE = 25;
+	public const int VERTICAL_SIZE = 27;
 
 	public const int MAX_STANDING_STRESS_FACTORS = VERTICAL_SIZE * VERTICAL_SIZE / 40;
 	private int currentStandingStressFactors = 0;
 	public int StressFactorsEliminated = 0;
+
+	public int EffectiveMaxStressFactors {
+		get { 
+			return Mathf.Max(0, MAX_STANDING_STRESS_FACTORS - (StressFactorsEliminated / 3));
+		}
+	}
+
+	public float StressFactorProgress {
+		get { 
+			return (float)StressFactorsEliminated / (MAX_STANDING_STRESS_FACTORS * 3);
+		}
+	}
 
 	public const int MAX_SWORMS = VERTICAL_SIZE * VERTICAL_SIZE / 60;
 	private int currentSworms = 0;
@@ -109,9 +122,9 @@ public class BoardController : MonoBehaviour {
 
 	private IEnumerator ManageStandingStressFactors() {
 		float nextStressFactorAt;
-		while(true) {
+		while(EffectiveMaxStressFactors > 0) {
 			// Wait until a new stress factor can be added
-			yield return new WaitUntil(() => currentStandingStressFactors < Mathf.Max(0, MAX_STANDING_STRESS_FACTORS - (StressFactorsEliminated / 3)));
+			yield return new WaitUntil(() => currentStandingStressFactors < EffectiveMaxStressFactors);
 			// Update waiting time
 			nextStressFactorAt = Time.timeSinceLevelLoad + Mathf.Max(5f, currentStandingStressFactors);
 			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextStressFactorAt);
@@ -147,9 +160,9 @@ public class BoardController : MonoBehaviour {
 
 	private IEnumerator ManageSworms() {
 		float nextSwormAt;
-		while(true) {
+		while(EffectiveMaxStressFactors > 0) {
 			// Wait until a new stress factor can be added
-			yield return new WaitUntil(() => currentSworms < Mathf.Max(1,  MAX_SWORMS - Mathf.Max(0, StressFactorsEliminated - 2)));
+			yield return new WaitUntil(() => currentSworms < Mathf.Max(1, MAX_SWORMS - Mathf.Max(0, StressFactorsEliminated - 2)));
 			// Update waiting time
 			nextSwormAt = Time.timeSinceLevelLoad + Mathf.Max(3f, currentSworms);
 			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextSwormAt);
@@ -177,5 +190,9 @@ public class BoardController : MonoBehaviour {
 	void OnSwormEliminated(SwormController sworm) {
 		sworm.MoveToPool(SwormPool);
 		currentSworms -= 1;
+	}
+
+	void OnPlayerAsleep() {
+		ThankYou.gameObject.SetActive(true);
 	}
 }
