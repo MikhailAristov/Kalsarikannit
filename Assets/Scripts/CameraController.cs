@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour {
@@ -38,5 +39,16 @@ public class CameraController : MonoBehaviour {
 		string filepath = String.Format("{0}\\screenshot_{1:yyyyMMddHHmmssfff}.png", targetDir, System.DateTime.Now);
 		ScreenCapture.CaptureScreenshot(filepath);
 		Debug.LogFormat("Screenshot saved to {0}.", filepath);
+	}
+
+	public void FocusOnPlayer() {
+		StartCoroutine(MoveOverPlayerToken());
+	}
+
+	private IEnumerator MoveOverPlayerToken()  {
+		while(Vector2.Distance(Player.transform.position, transform.position) > Util.NEGLIGIBLE) {
+			transform.position = Vector3.Lerp(transform.position, new Vector3(Player.transform.position.x, Player.transform.position.y, transform.position.z), 0.5f * Time.deltaTime);
+			yield return new WaitForEndOfFrame();
+		}
 	}
 }

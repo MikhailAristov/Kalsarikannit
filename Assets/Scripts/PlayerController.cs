@@ -290,6 +290,9 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	private IEnumerator GoToSleep() {
+		// Focus camera on player
+		Camera.main.GetComponent<CameraController>().FocusOnPlayer();
+		// Shut the Hex's eyes
 		SpriteRenderer lEye = myEyes[0], rEye = myEyes[1];
 		Vector3 closedEye = new Vector3(lEye.transform.localScale.x, 0, lEye.transform.localScale.y);
 		while(lEye.transform.localScale.y > Util.NEGLIGIBLE * 3 && rEye.transform.localScale.y > Util.NEGLIGIBLE * 3) {
