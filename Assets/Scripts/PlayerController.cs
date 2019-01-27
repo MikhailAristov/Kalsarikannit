@@ -5,8 +5,10 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour {
 
 	public const float LOW_STRESS_THRESHOLD = -0.5f;
+	public const float HIGH_STRESS_THRESHOLD = 0.9f;
 	private const float PULSE_EXPANSION_FACTOR = 1.5f;
 	private const float PULSE_DURATION = 0.5f;
+	private const float SINGLE_ROTATION_DURATION = 2f;
 
 	[Range(-1f, 1f)]
 	public float StressLevel = LOW_STRESS_THRESHOLD;
@@ -20,6 +22,7 @@ public class PlayerController : MonoBehaviour {
 
 	private Vector2 initSpriteScale, pulsingSpriteScale;
 
+	private bool isFleeing;
 	private bool isMoving;
 	private bool emergencyStop;
 
@@ -36,14 +39,21 @@ public class PlayerController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update() {
-		if(isMoving && Input.GetMouseButtonUp(1)) {
+		if(!isFleeing && isMoving && Input.GetMouseButtonUp(1)) {
 			emergencyStop = true;
 			PathDisplay.enabled = false;
 		} 
 
-		if(!isMoving && Input.GetMouseButtonUp(0)) {
+		if(!isFleeing && !isMoving && Input.GetMouseButtonUp(0)) {
 			isMoving = true;
 			StartCoroutine(FollowPathToTarget());
+		}
+
+		if(isFleeing) {
+			Vector3 rotationAxis = (transform.position.x < 0) ? Vector3.back : Vector3.forward;
+			mySprite.transform.RotateAround(mySprite.transform.position, rotationAxis, 360f / SINGLE_ROTATION_DURATION * Time.deltaTime);
+		} else if(!Util.Approx(mySprite.localRotation.eulerAngles.magnitude, 0)) {
+			mySprite.transform.localRotation = Quaternion.Lerp(mySprite.transform.localRotation, Quaternion.identity, Time.deltaTime);
 		}
 	}
 
@@ -55,6 +65,14 @@ public class PlayerController : MonoBehaviour {
 			} else if(CurrentTile.EffectiveStressLevel > Mathf.Max(StressLevel, 0)) {
 				StressLevel = Mathf.Lerp(StressLevel, CurrentTile.EffectiveStressLevel, 3f * Time.fixedDeltaTime);
 			}
+		}
+
+		if(!isFleeing && StressLevel > HIGH_STRESS_THRESHOLD) {
+			if(isMoving) {
+				emergencyStop = true;
+			}
+			isFleeing = true;
+			StartCoroutine(RunHome());
 		}
 
 		if(!isMoving && AdjacentStressFactor != null && AdjacentStressFactor.CurrentTile == CurrentTile) {
@@ -95,7 +113,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void OnMouseMovedOverTile(TileController tile) {
-		if(!isMoving && tile != CurrentTile) {
+		if(!isFleeing && !isMoving && tile != CurrentTile) {
 			TargetTile = tile;
 			RecalculatePathToTarget(tile);
 			DisplayPathToTarget();
@@ -213,5 +231,33 @@ public class PlayerController : MonoBehaviour {
 		// Stop moving
 		emergencyStop = false;
 		isMoving = false;
+	}
+
+	private IEnumerator RunHome() {
+		// Wait until the character stops moving, if necessary
+		yield return new WaitUntil(() => !isMoving);
+		// Wait until the character removes the stress factor fully
+		yield return new WaitUntil(() => AdjacentStressFactor == null || AdjacentStressFactor.CurrentTile != CurrentTile);
+		// Calculate path to home but don't display it
+		PathDisplay.enabled = false;
+		TargetTile = GameObject.FindGameObjectWithTag("Home").GetComponent<TileController>();
+		RecalculatePathToTarget(TargetTile);
+		// Start co-routine to run home
+		if(PathToTarget.Count > 1) {
+			// Jump across tiles
+			for(int i = 1; i < PathToTarget.Count; i++) {
+				// Clear adjacent stress factor
+				AdjacentStressFactor = null;
+				// Update my parent
+				transform.SetParent(PathToTarget[i].myCenter);
+				CurrentTile = PathToTarget[i];
+				// Lerp to parent's local position zero
+				while(transform.localPosition.magnitude > Util.NEGLIGIBLE) {
+					transform.localPosition = Vector2.Lerp(transform.localPosition, Vector2.zero, 15f * Time.deltaTime);
+					yield return new WaitForEndOfFrame();
+				}
+			}
+		}
+		isFleeing = false;
 	}
 }
