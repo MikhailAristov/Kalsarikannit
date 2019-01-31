@@ -5,7 +5,9 @@ using UnityEngine;
 public class TargetController : MonoBehaviour {
 
 	public SpriteRenderer mySprite;
+	public AudioSource myBeeper;
 	public TileController CurrentTile;
+	private Transform CameraTransform;
 
 	// How often, in seconds, does the target add to stress of its tile
 	public const float STRESS_INCREASE_INTERVAL = 2.0f;
@@ -20,11 +22,18 @@ public class TargetController : MonoBehaviour {
 	private bool isPulsing = false;
 	private Vector2 initSpriteScale, pulsingSpriteScale;
 
+	private float DistToCamera {
+		get { 
+			return Vector2.Distance(transform.position, CameraTransform.position);
+		}
+	}
+
 	// Use this for initialization
 	void Start() {
 		initSpriteScale = mySprite.transform.localScale;
 		pulsingSpriteScale = initSpriteScale * PULSE_EXPANSION_FACTOR;
 		mySprite.transform.localScale = INITIAL_SCALING_ON_SPAWN * Vector3.one;
+		CameraTransform = Camera.main.transform;
 	}
 	
 	// Update is called once per frame
@@ -65,6 +74,8 @@ public class TargetController : MonoBehaviour {
 				}
 			}
 		}
+		// Update beeper sound based on proximity to the camera
+		myBeeper.volume = 1f / (1f + 0.5f * DistToCamera * DistToCamera);
 	}
 
 	private void IncreaseStress() {
@@ -76,6 +87,8 @@ public class TargetController : MonoBehaviour {
 	private IEnumerator Pulse() {
 		float ExpansionStopAt = Time.timeSinceLevelLoad + STRESS_INCREASE_INTERVAL / 3f;
 		float ContractionStopAt = Time.timeSinceLevelLoad + STRESS_INCREASE_INTERVAL * 2f / 3f;
+		// Play a beep
+		myBeeper.Play();
 		// Expand
 		while(Time.timeSinceLevelLoad < ExpansionStopAt && Vector2.Distance(mySprite.transform.localScale, pulsingSpriteScale) > Util.NEGLIGIBLE) {
 			mySprite.transform.localScale = Vector2.Lerp(mySprite.transform.localScale, pulsingSpriteScale, 5f * Time.deltaTime);

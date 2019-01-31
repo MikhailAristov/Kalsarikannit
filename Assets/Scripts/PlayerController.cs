@@ -19,6 +19,8 @@ public class PlayerController : MonoBehaviour {
 	public Transform mySprite;
 	public SpriteRenderer[] myEyes = new SpriteRenderer[2];
 	public AudioSource[] myHeartBeat = new AudioSource[2];
+	public AudioSource Noise;
+	private float NoiseLevel;
 	public TileController CurrentTile;
 	public TileController TargetTile;
 	private List<TileController> PathToTarget;
@@ -49,7 +51,7 @@ public class PlayerController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update() {
-		if(!isFleeing && !isMoving && !isSleeping && myBoard.EffectiveMaxStressFactors < 1 && CurrentTile.CompareTag("Home")) {
+		if(!isFleeing && !isMoving && !isSleeping && myBoard.EffectiveMaxStressFactors < 1 && CurrentTile.CompareTag("Home") && Noise.volume < Util.NEGLIGIBLE) {
 			isSleeping = true;
 			StartCoroutine(GoToSleep());
 		}
@@ -69,6 +71,11 @@ public class PlayerController : MonoBehaviour {
 			mySprite.transform.RotateAround(mySprite.transform.position, rotationAxis, 360f / SINGLE_ROTATION_DURATION * Time.deltaTime);
 		} else if(!Util.Approx(mySprite.localRotation.eulerAngles.magnitude, 0)) {
 			mySprite.transform.localRotation = Quaternion.Lerp(mySprite.transform.localRotation, Quaternion.identity, Time.deltaTime);
+		}
+
+		// Adjust noise levels
+		if(!Util.Approx(Noise.volume, NoiseLevel)) {
+			Noise.volume = Mathf.Lerp(Noise.volume, NoiseLevel, 0.5f * Time.deltaTime);
 		}
 	}
 
@@ -93,6 +100,8 @@ public class PlayerController : MonoBehaviour {
 		if(ProcessingStressFactor) {
 			AdjacentStressFactor.Reduce(Time.fixedDeltaTime);
 		}
+
+		NoiseLevel = (CurrentTile.EffectiveStressLevel < LOW_STRESS_THRESHOLD) ? 0 : (CurrentTile.EffectiveStressLevel - LOW_STRESS_THRESHOLD) / (1f - LOW_STRESS_THRESHOLD);
 	}
 
 	public void PlaceOnTile(TileController target) {
@@ -301,6 +310,8 @@ public class PlayerController : MonoBehaviour {
 	private IEnumerator GoToSleep() {
 		// Focus camera on player
 		Camera.main.GetComponent<CameraController>().FocusOnPlayer();
+		// Mute noise
+		Noise.volume = 0;
 		// Shut the Hex's eyes
 		SpriteRenderer lEye = myEyes[0], rEye = myEyes[1];
 		Vector3 closedEye = new Vector3(lEye.transform.localScale.x, 0, lEye.transform.localScale.y);
