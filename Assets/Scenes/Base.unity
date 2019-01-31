@@ -206,6 +206,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Player: {fileID: 1846479001}
+  ThisCamera: {fileID: 451040355}
 --- !u!1001 &835584140
 Prefab:
   m_ObjectHideFlags: 0

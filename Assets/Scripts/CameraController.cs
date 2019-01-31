@@ -6,23 +6,38 @@ using UnityEngine;
 public class CameraController : MonoBehaviour {
 
 	public PlayerController Player;
+	public Camera ThisCamera;
 
-	private float MaxDistanceToPlayerX;
-	private float MaxDistanceToPlayerY;
+	private const float MOUSE_SCROLL_MARGIN = 0.1f;
+	private Vector2 HalfScreenSize;
+	private Vector2 MaxDistanceToPlayer;
 
 	// Use this for initialization
 	void Start() {
-		MaxDistanceToPlayerX = Camera.main.orthographicSize * Camera.main.aspect / 2f;
-		MaxDistanceToPlayerY = Camera.main.orthographicSize / 2f;
+		HalfScreenSize = new Vector2(ThisCamera.orthographicSize * ThisCamera.aspect, ThisCamera.orthographicSize);
+		MaxDistanceToPlayer = HalfScreenSize / 2f;
+		// Confine the cursor to the game window
+		Cursor.lockState = CursorLockMode.Confined;
 	}
 	
 	// Update is called once per frame
 	void Update() {
-		Vector2 PlayerRelativePosition = transform.position - Player.transform.position;
-		if(Mathf.Abs(PlayerRelativePosition.x) > MaxDistanceToPlayerX || Mathf.Abs(PlayerRelativePosition.y) > MaxDistanceToPlayerY) {
+		// Move the camera to follow the player if necessary
+		Vector2 PlayerRelativePosition = Player.transform.position - transform.position;
+		if(Mathf.Abs(PlayerRelativePosition.x) > MaxDistanceToPlayer.x || Mathf.Abs(PlayerRelativePosition.y) > MaxDistanceToPlayer.y) {
 			transform.position = Vector3.Lerp(transform.position, new Vector3(Player.transform.position.x, Player.transform.position.y, transform.position.z), 0.5f * Time.deltaTime);
 		}
 
+		// Follow the mouse cursor
+		Vector3 MouseRelativePosition = ThisCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0)) - transform.position;
+		if((MouseRelativePosition.x > HalfScreenSize.x - MOUSE_SCROLL_MARGIN && PlayerRelativePosition.x > -MaxDistanceToPlayer.x + MOUSE_SCROLL_MARGIN)
+			|| (MouseRelativePosition.x < -HalfScreenSize.x + MOUSE_SCROLL_MARGIN && PlayerRelativePosition.x < MaxDistanceToPlayer.x - MOUSE_SCROLL_MARGIN)
+			|| (MouseRelativePosition.y > HalfScreenSize.y - MOUSE_SCROLL_MARGIN && PlayerRelativePosition.y > -MaxDistanceToPlayer.y + MOUSE_SCROLL_MARGIN)
+			|| (MouseRelativePosition.y < -HalfScreenSize.y + MOUSE_SCROLL_MARGIN && PlayerRelativePosition.y < MaxDistanceToPlayer.y - MOUSE_SCROLL_MARGIN)) {
+			transform.Translate(MouseRelativePosition * Time.deltaTime);
+		}
+
+		// Take a screenshot when prompted
 		if(Input.GetKeyUp(KeyCode.Space)) {
 			takeScreenshot();
 		}

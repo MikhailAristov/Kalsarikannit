@@ -25,6 +25,16 @@ public class Util : MonoBehaviour {
 		return Approx(Vector2.Distance(a, b), 0f);
 	}
 
+	public static bool Between(int x, int min, int max) {
+		Debug.Assert(min < max);
+		return (x >= min && x < max);
+	}
+
+	public static bool Between(float x, float min, float max) {
+		Debug.Assert(min < max);
+		return (x >= min && x < max);
+	}
+
 	public static string GetNewGuid() {
 		Guid g = Guid.NewGuid();
 		return g.ToString();
