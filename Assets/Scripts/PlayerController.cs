@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour {
 	public BoardController myBoard;
 	public Transform mySprite;
 	public SpriteRenderer[] myEyes = new SpriteRenderer[2];
+	public AudioSource[] myHeartBeat = new AudioSource[2];
 	public TileController CurrentTile;
 	public TileController TargetTile;
 	private List<TileController> PathToTarget;
@@ -111,6 +112,12 @@ public class PlayerController : MonoBehaviour {
 			// Prepare pulse
 			float ExpansionStopAt = Time.timeSinceLevelLoad + PULSE_DURATION / 2f;
 			float ContractionStopAt = Time.timeSinceLevelLoad + PULSE_DURATION;
+			// Play heartbeat
+			if(!myHeartBeat[0].isPlaying) {
+				myHeartBeat[0].Play();
+			} else {
+				myHeartBeat[1].Play();
+			}
 			// Expand
 			while(Time.timeSinceLevelLoad < ExpansionStopAt && Vector2.Distance(mySprite.localScale, pulsingSpriteScale) > Util.NEGLIGIBLE) {
 				mySprite.localScale = Vector2.Lerp(mySprite.localScale, pulsingSpriteScale, 10f * Time.deltaTime);
@@ -251,6 +258,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	private IEnumerator RunHome() {
+		StressLevel = 1f;
 		// Wait until the character stops moving, if necessary
 		yield return new WaitUntil(() => !isMoving);
 		// Wait until the character removes the stress factor fully
@@ -286,6 +294,7 @@ public class PlayerController : MonoBehaviour {
 				} while(transform.localPosition.magnitude > Util.NEGLIGIBLE && lastDistToTarget > transform.localPosition.magnitude);
 			}
 		}
+		StressLevel /= 2;
 		isFleeing = false;
 	}
 
