@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour {
 
@@ -40,6 +41,9 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
+	public bool HasMoved = false;
+	private float LastActivityTimestamp;
+
 	// Use this for initialization
 	void Start() {
 		myBoard = GameObject.FindGameObjectWithTag("GameController").GetComponent<BoardController>();
@@ -47,10 +51,20 @@ public class PlayerController : MonoBehaviour {
 		pulsingSpriteScale = initSpriteScale * PULSE_EXPANSION_FACTOR;
 		StartCoroutine(PulseWithStress());
 		PathToTarget = new List<TileController>();
+		UpdateActivityTimestamp();
 	}
 	
 	// Update is called once per frame
 	void Update() {
+		if(myBoard.ExpoMode && HasMoved) {
+			if(isMoving || isFleeing) {
+				UpdateActivityTimestamp();
+			}
+			if(Time.timeSinceLevelLoad - LastActivityTimestamp > BoardController.TIME_BEFORE_GAME_RESET_IN_EXPO_MODE) {
+				SceneManager.LoadScene(0); // Re-load the default scene to reset the level
+			}
+		}
+
 		if(!isFleeing && !isMoving && !isSleeping && myBoard.EffectiveMaxStressFactors < 1 && CurrentTile.CompareTag("Home") && Noise.volume < Util.NEGLIGIBLE) {
 			isSleeping = true;
 			StartCoroutine(GoToSleep());
@@ -222,6 +236,7 @@ public class PlayerController : MonoBehaviour {
 		PathDisplay.enabled = true;
 		PathDisplay.positionCount = PathToTarget.Count;
 		PathDisplay.SetPositions(pathPositions);
+		UpdateActivityTimestamp();
 	}
 
 	private void HidePathToTarget() {
@@ -230,6 +245,7 @@ public class PlayerController : MonoBehaviour {
 
 	private IEnumerator FollowPathToTarget() {
 		if(PathToTarget.Count > 1 && PathDisplay.enabled) {
+			HasMoved = true;
 			// Stabilize path while moving
 			PathDisplay.transform.SetParent(transform.parent);
 			// Jump across tiles
@@ -320,6 +336,11 @@ public class PlayerController : MonoBehaviour {
 			rEye.transform.localScale = Vector3.Lerp(rEye.transform.localScale, closedEye, 0.1f * Time.deltaTime);
 			yield return new WaitForEndOfFrame();
 		}
+		UpdateActivityTimestamp(-BoardController.TIME_BEFORE_GAME_RESET_IN_EXPO_MODE / 2f);
 		myBoard.SendMessage("OnPlayerAsleep");
+	}
+
+	private void UpdateActivityTimestamp(float Offset = 0f) {
+		LastActivityTimestamp = Time.timeSinceLevelLoad + Offset;
 	}
 }

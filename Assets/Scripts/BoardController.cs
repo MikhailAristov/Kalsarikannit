@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class BoardController : MonoBehaviour {
 
+	public bool ExpoMode = false;
+	public const float TIME_BEFORE_GAME_RESET_IN_EXPO_MODE = 20f; // in seconds
+
 	public Canvas ThankYou;
 	public Transform Background;
 	public GameObject TilePrefab;
@@ -121,6 +124,9 @@ public class BoardController : MonoBehaviour {
 	}
 
 	private IEnumerator ManageStandingStressFactors() {
+		// Wait until player moves from its initial position
+		yield return new WaitUntil(() => Player.HasMoved);
+		// Start adding stress factors
 		float nextStressFactorAt;
 		while(EffectiveMaxStressFactors > 0) {
 			// Wait until a new stress factor can be added
@@ -159,6 +165,9 @@ public class BoardController : MonoBehaviour {
 	}
 
 	private IEnumerator ManageSworms() {
+		// Wait until player moves from its initial position
+		yield return new WaitUntil(() => Player.HasMoved);
+		// Start adding sworms
 		float nextSwormAt;
 		while(EffectiveMaxStressFactors > 0) {
 			// Wait until a new stress factor can be added
@@ -167,7 +176,7 @@ public class BoardController : MonoBehaviour {
 			nextSwormAt = Time.timeSinceLevelLoad + Mathf.Max(3f, currentSworms);
 			yield return new WaitUntil(() => Time.timeSinceLevelLoad > nextSwormAt);
 			// Spawn a new stress factor
-			spawnSworm(Mathf.RoundToInt(Mathf.Sqrt(VERTICAL_SIZE)) + 1,  GetRandomTileNotOnEdge());
+			spawnSworm(Mathf.RoundToInt(Mathf.Sqrt(VERTICAL_SIZE)) + 1, GetRandomTileNotOnEdge());
 		}
 	}
 
