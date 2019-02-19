@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour {
 	private const float PULSE_DURATION = 0.5f;
 	private const float SINGLE_ROTATION_DURATION = 1f;
 	private const float STEP_DURATION = 0.5f;
+	private const float HOMEWARD_STEP_DURATION = 0.35f;
 	private const float RUNNING_STEP_DURATION = 0.2f;
 
 	[Range(-1f, 1f)]
@@ -252,6 +253,8 @@ public class PlayerController : MonoBehaviour {
 			for(int i = 1; i < PathToTarget.Count; i++) {
 				// Clear adjacent stress factor
 				AdjacentStressFactor = null;
+				// Here we abuse that the homeward tile is always on the coordinates origin point
+				bool homeward = PathToTarget[i].transform.position.magnitude < transform.parent.position.magnitude;
 				// Update my parent
 				transform.SetParent(PathToTarget[i].myCenter);
 				CurrentTile = PathToTarget[i];
@@ -260,7 +263,8 @@ public class PlayerController : MonoBehaviour {
 				float lastDistToTarget = float.MaxValue;
 				do {
 					lastDistToTarget = transform.localPosition.magnitude;
-					transform.Translate(-startingPos / STEP_DURATION * Time.deltaTime);
+					float stepDuration = homeward ? HOMEWARD_STEP_DURATION : STEP_DURATION;
+					transform.Translate(-startingPos / stepDuration * Time.deltaTime);
 					yield return new WaitForEndOfFrame();
 				} while(transform.localPosition.magnitude > Util.NEGLIGIBLE && lastDistToTarget > transform.localPosition.magnitude);
 				// If emergency stop requested, stop after the current jump
