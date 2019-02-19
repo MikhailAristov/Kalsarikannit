@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Kalsarikännit"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "Mikhail Aristov"
 #define MyAppURL "https://www.koveras.net/"
 #define MyAppExeName "Kalsarikannit.exe"
